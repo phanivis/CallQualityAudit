@@ -42,6 +42,21 @@ code directly on the login screen so you can sign in without email setup.
 | `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | optional | Enables the Google sign-in button |
 | `RESEND_API_KEY` | prod | Sends OTP emails (required for email login in production) |
 | `EMAIL_FROM` | optional | Verified Resend sender, e.g. `Audit <audit@yourdomain.com>` |
+| `KV_REST_API_URL` / `KV_REST_API_TOKEN` | optional | Vercel KV / Upstash Redis — per-user criteria + audit history that syncs across devices. Without it, persistence falls back to browser localStorage |
+
+## Persistence
+
+- **Evaluation criteria** auto-save per user as you edit (debounced) and are
+  restored on the next sign-in.
+- **Audit history** — every evaluated call is saved automatically and listed
+  on the **History** page (`/history`), where reports can be re-opened,
+  downloaded as HTML, exported to Excel (one row per call), or deleted.
+- Storage backend: if `KV_REST_API_URL`/`KV_REST_API_TOKEN` (or the
+  `UPSTASH_REDIS_REST_*` equivalents) are set, data lives in Redis keyed by
+  user email and follows the user across devices. Otherwise the browser's
+  localStorage is used — zero setup, but per-device. On Vercel, create a
+  Redis store under the project's **Storage** tab and the env vars are added
+  automatically.
 
 ## Deploying to Vercel
 

@@ -143,6 +143,7 @@ Fill every field of the required output schema. Keep evidence quotes short (unde
     const evaluation = JSON.parse(textBlock.text) as EvaluationResult;
 
     return NextResponse.json({
+      id: crypto.randomUUID(),
       file_name: file.name,
       transcript,
       evaluation,

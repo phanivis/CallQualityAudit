@@ -1,0 +1,38 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm --version)",
+      "Bash(gh auth *)",
+      "Bash(vercel --version)",
+      "Skill(claude-api)",
+      "Skill(claude-api:*)",
+      "Read(//private/tmp/**)",
+      "Bash(rm -rf cqa-scaffold)",
+      "Bash(npx --yes create-next-app@latest cqa-scaffold --typescript --tailwind --eslint --app --src-dir --import-alias \"@/*\" --no-turbopack --use-npm)",
+      "Bash(rm -rf .git)",
+      "Bash(cp -R . /Users/phanivishwanathcherukupalli/Documents/projects/CallQualityAudit/)",
+      "Bash(sed -i '' 's/\"name\": \"cqa-scaffold\"/\"name\": \"call-quality-audit\"/' package.json)",
+      "Bash(npm install *)",
+      "Bash(node -e \"const p=require\\('./package.json'\\); console.log\\(JSON.stringify\\(p.dependencies,null,1\\)\\)\")",
+      "Bash(npm run *)",
+      "Bash(PORT=3456 AUTH_SECRET=test-secret npm run start)",
+      "Bash(curl -s -o /dev/null -w \"GET / -> %{http_code} \\(redirect: %{redirect_url}\\)\\\\n\" http://localhost:3456/)",
+      "Bash(curl -s -o /dev/null -w \"GET /login -> %{http_code}\\\\n\" http://localhost:3456/login)",
+      "Bash(curl -s http://localhost:3456/login)",
+      "Bash(curl -s -X POST http://localhost:3456/api/otp/send -H \"Content-Type: application/json\" -d '{\"email\":\"test@example.com\"}')",
+      "Bash(curl -s -X POST -o /dev/null -w \"POST /api/evaluate \\(unauth\\) -> %{http_code}\\\\n\" http://localhost:3456/api/evaluate)",
+      "Bash(kill %1)",
+      "Bash(git init *)",
+      "Bash(git add *)",
+      "Bash(git config *)",
+      "Bash(git rm *)",
+      "Bash(git commit -q -m 'Call Quality Audit webapp: Google SSO + Email OTP auth, multi-file audio upload, editable rubric, Whisper transcription + Claude evaluation, HTML reports and Excel export *)",
+      "Bash(git remote *)",
+      "Bash(git push *)",
+      "Bash(git fetch *)",
+      "Bash(git ls-tree *)",
+      "Bash(git rebase *)",
+      "Bash(git checkout *)"
+    ]
+  }
+}

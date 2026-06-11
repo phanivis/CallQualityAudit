@@ -1,11 +1,13 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import { signOut } from "next-auth/react";
 import { DEFAULT_CRITERIA } from "@/lib/criteria";
 import type { CallAuditRecord } from "@/lib/evaluation";
 import { renderReportBody, renderStandaloneHtml, REPORT_CSS } from "@/lib/reportHtml";
 import { downloadExcel } from "@/lib/excel";
+import { loadCriteria, saveCriteria, saveAuditRecord } from "@/lib/clientStorage";
 
 type FileStatus = "queued" | "transcribing & evaluating" | "done" | "error";
 
@@ -18,11 +20,45 @@ interface QueuedFile {
 
 export default function AuditApp({ userLabel }: { userLabel: string }) {
   const [criteria, setCriteria] = useState(DEFAULT_CRITERIA);
+  const [criteriaLoaded, setCriteriaLoaded] = useState(false);
+  const [saveState, setSaveState] = useState<"idle" | "saving" | "saved">("idle");
   const [showCriteria, setShowCriteria] = useState(false);
   const [queue, setQueue] = useState<QueuedFile[]>([]);
   const [running, setRunning] = useState(false);
   const [activeReport, setActiveReport] = useState<number | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const skipNextSave = useRef(true);
+
+  // Load the user's saved criteria once on mount.
+  useEffect(() => {
+    let cancelled = false;
+    loadCriteria(userLabel).then((saved) => {
+      if (cancelled) return;
+      if (saved && saved.trim()) {
+        skipNextSave.current = true;
+        setCriteria(saved);
+      }
+      setCriteriaLoaded(true);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [userLabel]);
+
+  // Auto-save criteria edits (debounced) so they persist per user.
+  useEffect(() => {
+    if (!criteriaLoaded) return;
+    if (skipNextSave.current) {
+      skipNextSave.current = false;
+      return;
+    }
+    setSaveState("saving");
+    const t = setTimeout(async () => {
+      await saveCriteria(userLabel, criteria);
+      setSaveState("saved");
+    }, 800);
+    return () => clearTimeout(t);
+  }, [criteria, criteriaLoaded, userLabel]);
 
   const results = queue.filter((q) => q.result).map((q) => q.result!) as CallAuditRecord[];
 
@@ -60,6 +96,8 @@ export default function AuditApp({ userLabel }: { userLabel: string }) {
         setQueue((prev) =>
           prev.map((q, j) => (j === i ? { ...q, status: "done", result: data } : q))
         );
+        // Persist to per-user audit history (server storage or local fallback).
+        void saveAuditRecord(userLabel, data as CallAuditRecord);
       } catch (e) {
         setQueue((prev) =>
           prev.map((q, j) =>
@@ -99,6 +137,12 @@ export default function AuditApp({ userLabel }: { userLabel: string }) {
         </div>
         <div className="flex items-center gap-3 text-sm">
           <span className="text-gray-600">{userLabel}</span>
+          <Link
+            href="/history"
+            className="rounded-lg border border-gray-300 px-3 py-1.5 hover:bg-gray-50"
+          >
+            History
+          </Link>
           <button
             onClick={() => signOut({ callbackUrl: "/login" })}
             className="rounded-lg border border-gray-300 px-3 py-1.5 hover:bg-gray-50"
@@ -181,7 +225,15 @@ export default function AuditApp({ userLabel }: { userLabel: string }) {
       {/* Step 2: criteria */}
       <section className="mb-6 rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
         <div className="flex items-center justify-between">
-          <h2 className="font-semibold">2. Evaluation criteria</h2>
+          <h2 className="font-semibold">
+            2. Evaluation criteria
+            {saveState === "saving" && (
+              <span className="ml-2 text-xs font-normal text-gray-400">Saving…</span>
+            )}
+            {saveState === "saved" && (
+              <span className="ml-2 text-xs font-normal text-green-600">Saved ✓</span>
+            )}
+          </h2>
           <div className="flex gap-2 text-sm">
             <button
               onClick={() => setShowCriteria((s) => !s)}
@@ -202,7 +254,7 @@ export default function AuditApp({ userLabel }: { userLabel: string }) {
         <p className="mt-1 text-sm text-gray-500">
           {criteria === DEFAULT_CRITERIA
             ? "Using the default 9-category, 100-point sales call rubric. Edit it or submit as-is."
-            : "Using a customized rubric."}
+            : "Using your customized rubric — changes save automatically and persist across sessions."}
         </p>
         {showCriteria && (
           <textarea

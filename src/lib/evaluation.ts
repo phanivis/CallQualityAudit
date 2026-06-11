@@ -93,6 +93,7 @@ export interface EvaluationResult {
 }
 
 export interface CallAuditRecord {
+  id: string;
   file_name: string;
   transcript: string;
   evaluation: EvaluationResult;
